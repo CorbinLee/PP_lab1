@@ -12,6 +12,8 @@ float *b;  /* The constants */
 float err; /* The absolute relative error */
 int num = 0;  /* number of unknowns */
 
+float *temp;
+
 /****** Function declarations */
 void check_matrix(); /* Check whether the matrix will converge */
 void get_input();  /* Read input from file */
@@ -151,16 +153,23 @@ int calc_unknowns(int my_rank, int comm_sz)
   for (int j = my_rank * num/comm_sz; j < (my_rank+1) * num/comm_sz; j++) 
   {
     float old = x[j];
-    x[j] = b[j];
+    float new = b[j];
     for (int p = 0; p < num; p++) 
     {
       if (p != j) 
-        x[j] -= x[p] * a[j][p];
+        new -= x[p] * a[j][p];
     }
-    x[j] = x[j] / a[j][j];
-    if (fabs((x[j] - old) / x[j]) > err)
+    new = new / a[j][j];
+    if (fabs((new - old) / new) > err)
       high_err = 1;
+    temp[j - (my_rank * num/comm_sz)] = new;
   }
+
+  for (int j = my_rank * num/comm_sz; j < (my_rank+1) * num/comm_sz; j++)
+  {
+    x[j] = temp[j - (my_rank * num/comm_sz)];
+  }
+
   return high_err;
 }
 
@@ -180,11 +189,10 @@ int main(int argc, char *argv[])
   //float new = 0;
   int i;
   int temp_err; /* Does this process have an error margin that's too high  */ 
-  float *temp;
   int go = 0;
   int ok = 0;
 
-	temp = (float *) malloc(num / comm_sz * sizeof(float));
+	temp = (float *) malloc((num / comm_sz) * sizeof(float));
 	if( !temp)
 	{
 		printf("Cannot allocate temp!\n");
@@ -223,9 +231,6 @@ int main(int argc, char *argv[])
 
       /* Broadcast current unknowns */
       MPI_Bcast(x, num, MPI_FLOAT, 0, MPI_COMM_WORLD);
-      // for (i = 1; i < comm_sz; i++) {
-      // 	MPI_Send(x, num, MPI_FLOAT, i, 0, MPI_COMM_WORLD);
-      // }
 
       /* Calculate this processes unknowns */
       high_err = calc_unknowns(my_rank, comm_sz);
