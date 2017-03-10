@@ -150,8 +150,7 @@ void get_input(char filename[])
 int calc_unknowns(int my_rank, int comm_sz)
 {
   int high_err = 0;
-  int first_i = my_rank * num/comm_sz; 
-  for (int j = first_i; j < first_i + num/comm_sz; j++) 
+  for (int j = my_rank * num/comm_sz; j < (my_rank+1) * num/comm_sz; j++) 
   {
     float new = b[j];
     for (int p = 0; p < num; p++) 
@@ -162,12 +161,16 @@ int calc_unknowns(int my_rank, int comm_sz)
     new = new / a[j][j];
     if (fabs((new - x[j]) / new) > err)
       high_err = 1;
-    temp[j - first_i] = new;
+    temp[j - (my_rank * num/comm_sz)] = new;
   }
+}
 
+int fill_in(int rank, int comm_sz) {
   /* Fill in new unknowns */
-  for (int j = first_i; j < first_i + num/comm_sz; j++)
+  int first_i = rank * num/comm_sz
+  for (int j = first_i; j < (rank+1) * num/comm_sz; j++)
   {
+    if (fabs((temp[j - first_i] - x[j]) / temp[j - first_i]) > err)
     x[j] = temp[j - first_i];
   }
 
@@ -237,8 +240,10 @@ int main(int argc, char *argv[])
       /* Receive/update unkowns and check for completion */
       for (i = 1; i < comm_sz; i++) 
       {
-        MPI_Recv(&x[i * num / comm_sz], num / comm_sz, MPI_FLOAT, i, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-        MPI_Recv(&temp_err, 1, MPI_INT, i, 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        //MPI_Recv(&x[i * num / comm_sz], num / comm_sz, MPI_FLOAT, i, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        MPI_Recv(temp, num / comm_sz, MPI_FLOAT, i, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        //MPI_Recv(&temp_err, 1, MPI_INT, i, 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
         if (!high_err)
           high_err = temp_err;
       }
