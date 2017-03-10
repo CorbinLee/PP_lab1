@@ -17,6 +17,7 @@ float *temp;
 /****** Function declarations */
 void check_matrix(); /* Check whether the matrix will converge */
 void get_input();  /* Read input from file */
+int calc_unknowns(); /* Calculate this processes unknowns */
 
 /********************************/
 
@@ -231,9 +232,13 @@ int main(int argc, char *argv[])
       /* Broadcast current unknowns */
       MPI_Bcast(x, num, MPI_FLOAT, 0, MPI_COMM_WORLD);
 
+      MPI_Barrier(MPI_COMM_WORLD);
+
       /* Calculate this processes unknowns */
       high_err = calc_unknowns(my_rank, comm_sz);
       
+      MPI_Barrier(MPI_COMM_WORLD);
+
       /* Receive/update unkowns and check for completion */
       for (i = 1; i < comm_sz; i++) 
       {
@@ -264,8 +269,12 @@ int main(int argc, char *argv[])
       /* Receive current unkowns */
       MPI_Bcast(x, num, MPI_FLOAT, 0, MPI_COMM_WORLD);
 
+      MPI_Barrier(MPI_COMM_WORLD);
+
       /* Calculate this processes unknowns */
       temp_err = calc_unknowns(my_rank, comm_sz);
+
+      MPI_Barrier(MPI_COMM_WORLD);
 
       /* Send out new unknown */
       MPI_Send(&x[my_rank * num / comm_sz], num / comm_sz, MPI_FLOAT, 0, 1, MPI_COMM_WORLD);
