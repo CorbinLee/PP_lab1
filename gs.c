@@ -12,7 +12,7 @@ float *b;  /* The constants */
 float err; /* The absolute relative error */
 int num = 0;  /* number of unknowns */
 
-float *temp;
+float *temp; /* Place to hold new unknowns while calculating the rest */
 
 /****** Function declarations */
 void check_matrix(); /* Check whether the matrix will converge */
@@ -192,14 +192,6 @@ int main(int argc, char *argv[])
   int i;
   int temp_err; /* Does this process have an error margin that's too high  */ 
 
-	temp = (float *) malloc((num / comm_sz) * sizeof(float));
-	if( !temp)
-	{
-		printf("Cannot allocate temp!\n");
-		exit(1);
-	}
-
-
   /* Check number of arguments */
   if( argc != 2)
   {
@@ -209,6 +201,13 @@ int main(int argc, char *argv[])
 
   /* Read the input file and fill the global data structure above */ 
   get_input(argv[1]);
+
+  temp = (float *) malloc((num / comm_sz) * sizeof(float));
+  if( !temp)
+  {
+    printf("Cannot allocate temp!\n");
+    exit(1);
+  }
 
   /* Check for convergence condition */
   /* This function will exit the program if the coffeicient will never converge to 
@@ -232,17 +231,13 @@ int main(int argc, char *argv[])
       /* Broadcast current unknowns */
       MPI_Bcast(x, num, MPI_FLOAT, 0, MPI_COMM_WORLD);
 
-      MPI_Barrier(MPI_COMM_WORLD);
-
       /* Calculate this processes unknowns */
       high_err = calc_unknowns(my_rank, comm_sz);
       
-      MPI_Barrier(MPI_COMM_WORLD);
-
       /* Receive/update unkowns and check for completion */
       for (i = 1; i < comm_sz; i++) 
       {
-        MPI_Recv(&x[i * num / comm_sz], num / comm_sz, MPI_FLOAT, i, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        MPI_Recv(&x[i * num/comm_sz], num/comm_sz, MPI_FLOAT, i, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
         MPI_Recv(&temp_err, 1, MPI_INT, i, 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
         if (!high_err)
           high_err = temp_err;
@@ -269,15 +264,11 @@ int main(int argc, char *argv[])
       /* Receive current unkowns */
       MPI_Bcast(x, num, MPI_FLOAT, 0, MPI_COMM_WORLD);
 
-      MPI_Barrier(MPI_COMM_WORLD);
-
       /* Calculate this processes unknowns */
       temp_err = calc_unknowns(my_rank, comm_sz);
 
-      MPI_Barrier(MPI_COMM_WORLD);
-
       /* Send out new unknown */
-      MPI_Send(&x[my_rank * num / comm_sz], num / comm_sz, MPI_FLOAT, 0, 1, MPI_COMM_WORLD);
+      MPI_Send(&x[my_rank * num/comm_sz], num/comm_sz, MPI_FLOAT, 0, 1, MPI_COMM_WORLD);
       MPI_Send(&temp_err, 1, MPI_INT, 0, 2, MPI_COMM_WORLD);
 
 
