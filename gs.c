@@ -275,64 +275,6 @@ int main(int argc, char *argv[])
     }
   }
 
-  // printf("Process %d:", my_rank);
-  // for (i = 0; i < test_sz; i++) {
-  // 	printf(" %f,", test[i]);
-  // }
-  // printf("\n");
-
-  // do {
-  //   done = 1;
-
-  //   // Get new for assigned unknowns
-  //   // my unknowns => (my_rank * num/comm_sz) -> ((my_rank+1) * num/comm_sz - 1)
-
-
-  //   if (my_rank != 0) {
-  //     // Get the updated unknowns
-
-  //     // Send new to master
-  //     for (int j = my_rank * num/comm_sz; j < (my_rank+1) * num/comm_sz; j++) {
-  //       x[j] = b[j];
-  //       for (int p = 0; p < num; p++) {
-  //         if (p != j) {
-  //           new -= x[p] * a[j][p];
-  //         }
-  //       }
-  //     }
-  //     // Recieve whether or not to continue from master
-
-  //   } else {
-  //     int nit = 0;  number of iterations 
-  //     // Send the updated unknowns
-  //     for (i = 0; i < num; i++) {
-  //       MPI_Send(x, )
-  //     }
-
-  //     x[0] = 25;
-  //     printf("%s\n", "hi there");
-
-  //     nit++;
-  //   }
-  //   // for (int j = 0; j < num; j++) {
-  //   //   old = x[j];
-
-  //   //   // Now calculate new
-  //   //   new = b[j];
-  //   //   for (int p = 0; p < num; p++) {
-  //   //     if (p != j) {
-  //   //       new -= x[p] * a[j][p];
-  //   //     }
-  //   //   }
-  //   //   new = new / a[j][j];
-
-  //   //   x[j] = new;
-
-  //   //   if (fabs((new - old) / new) > err)
-  //   //     done = 0; 
-  //   // }
-  // } while (done == 0);
-
   MPI_Finalize();
 
   exit(0);
