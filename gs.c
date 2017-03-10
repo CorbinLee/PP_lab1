@@ -152,7 +152,6 @@ int calc_unknowns(int my_rank, int comm_sz)
   int high_err = 0;
   for (int j = my_rank * num/comm_sz; j < (my_rank+1) * num/comm_sz; j++) 
   {
-    float old = x[j];
     float new = b[j];
     for (int p = 0; p < num; p++) 
     {
@@ -160,11 +159,12 @@ int calc_unknowns(int my_rank, int comm_sz)
         new -= x[p] * a[j][p];
     }
     new = new / a[j][j];
-    if (fabs((new - old) / new) > err)
+    if (fabs((new - x[j]) / new) > err)
       high_err = 1;
     temp[j - (my_rank * num/comm_sz)] = new;
   }
 
+  /* Fill in new unknowns */
   for (int j = my_rank * num/comm_sz; j < (my_rank+1) * num/comm_sz; j++)
   {
     x[j] = temp[j - (my_rank * num/comm_sz)];
@@ -189,8 +189,6 @@ int main(int argc, char *argv[])
   //float new = 0;
   int i;
   int temp_err; /* Does this process have an error margin that's too high  */ 
-  int go = 0;
-  int ok = 0;
 
 	temp = (float *) malloc((num / comm_sz) * sizeof(float));
 	if( !temp)
