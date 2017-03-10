@@ -209,20 +209,18 @@ int main(int argc, char *argv[])
     exit(1);
   }
 
-  /* Check for convergence condition */
-  /* This function will exit the program if the coffeicient will never converge to 
-  * the needed absolute error. 
-  * This is not expected to happen for this programming assignment.
-  */
-  check_matrix();
-
-
-  MPI_Barrier(MPI_COMM_WORLD);
 
   if (my_rank == 0) /* Master Process */
   {
     int high_err = 1; /* Is the margin of error too high */
     int nit = 0; /* # of iterations */
+
+    /* Check for convergence condition */
+    /* This function will exit the program if the coffeicient will never converge to 
+    * the needed absolute error. 
+    * This is not expected to happen for this programming assignment.
+    */
+    check_matrix();
 
     while (high_err) 
     {
